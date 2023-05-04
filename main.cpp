@@ -17,17 +17,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/noise.hpp>
 
 #include "camera.h"
 #include "shader.h"
 #include "chunk.h"
+#include <cmath>
 
 bool done = false;
 
 const int screen_w = 1024;
 const int screen_h = 768;
 
-const float moveSpeed = 16.0f; // units/sec
+const float moveSpeed = 8.0f; // units/sec
 
 unsigned int VBO, VAO;
 
@@ -35,110 +37,67 @@ unsigned int VBO, VAO;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-std::array<float, 30> NZ = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f
+std::array<float, 36> NZ = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f
 };
 
-std::array<float, 30> PZ = {
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f
+std::array<float, 36> PZ = {
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f
 };
 
-std::array<float, 30> NX = {
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f
+std::array<float, 36> NX = {
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f
 };
 
-std::array<float, 30> PX = {
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f
+std::array<float, 36> PX = {
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f
 };
 
-std::array<float, 30> NY = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f
+std::array<float, 36> NY = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f
 };
 
-std::array<float, 30> PY = {
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+std::array<float, 36> PY = {
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f
 };
 
-std::array<float, 180> vertices = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-};
 
 Player player;
 Camera camera;
 unsigned int texture_array;
 std::vector<Chunk*> chunkList;
-const int WORLD_SIZE_IN_CHUNKS = 500;
-bool chunk_used[WORLD_SIZE_IN_CHUNKS][WORLD_SIZE_IN_CHUNKS] = {false};
+const int WORLD_SIZE_IN_CHUNKS = 50;
+bool chunk_used[WORLD_SIZE_IN_CHUNKS][WORLD_SIZE_IN_CHUNKS][WORLD_SIZE_IN_CHUNKS] = {false};
 
 void setupTextures()
 {
@@ -188,39 +147,78 @@ void setupTextures()
 
 void generateTerrain()
 {
-    //while (!done) {
-        glm::vec3& playerPos = player.getPosition();
+    glm::vec3& playerPos = player.getPosition();
 
-        // Get the chunk position the player is in
-        int chunk_x_center = (((int)playerPos.x) / Chunk::CHUNK_SIZE);
-        if (playerPos.x < 0) chunk_x_center--;
-        //int chunk_y = playerPos.y / Chunk::CHUNK_SIZE;
-        int chunk_z_center = (((int)playerPos.z) / Chunk::CHUNK_SIZE);
-        if (playerPos.z < 0) chunk_z_center--;
+    // Get the chunk position the player is in
+    int chunk_x_start = (((int)playerPos.x) / Chunk::CHUNK_SIZE);
+    if (playerPos.x < 0) chunk_x_start--;
+    int chunk_y_start = (((int)playerPos.y) / Chunk::CHUNK_SIZE);
+    if (playerPos.y < 0) chunk_y_start--;
+    int chunk_z_start = (((int)playerPos.z) / Chunk::CHUNK_SIZE);
+    if (playerPos.z < 0) chunk_z_start--;
 
-        // generate the chunks near where the player is standing if they dont exist already
-        for (int chunk_x = chunk_x_center - 1; chunk_x <= chunk_x_center + 1; chunk_x++) {
-            for (int chunk_z = chunk_z_center - 1; chunk_z <= chunk_z_center + 1; chunk_z++) {
-                if (!chunk_used[chunk_x][chunk_z]) {
+    // generate the chunks near where the player is standing if they dont exist already
+    for (int chunk_x = chunk_x_start - 4; chunk_x <= chunk_x_start + 4; chunk_x++) {
+        for (int chunk_y = chunk_y_start - 4; chunk_y <= chunk_y_start + 4; chunk_y++) {
+            for (int chunk_z = chunk_z_start - 4; chunk_z <= chunk_z_start + 4; chunk_z++) {
+
+                if (chunk_x < 0) continue;
+                if (chunk_y < 0) continue;
+                if (chunk_z < 0) continue;
+
+                if (!chunk_used[chunk_x][chunk_y][chunk_z]) {
                     Chunk* pChunk = new Chunk();
+                    
                     for (int block_x = 0; block_x < Chunk::CHUNK_SIZE; block_x++) {
                         for (int block_z = 0; block_z < Chunk::CHUNK_SIZE; block_z++) {
-                            // Make this chunk flat ground
-                            pChunk->m_pBlocks[block_x][0][block_z].m_blockType = BlockType::BlockType_Grass;
+
+                            double x = (block_x + (Chunk::CHUNK_SIZE * chunk_x)) / 128.0;
+                            double z = (block_z + (Chunk::CHUNK_SIZE * chunk_z)) / 128.0;
+
+                            double height = glm::simplex(glm::vec2(x, z));
+                            height = (height + 1.0) / 2.0;
+                            height *= 16.0;
+                            //double height = 64.0 * glm::sin(x / 64.0) + 64.0;
+                            //double height = 5.0;
+                            int block_y = (int)floor(height);
+
+                            if (block_y >= (chunk_y * Chunk::CHUNK_SIZE) && (block_y < ((chunk_y + 1) * Chunk::CHUNK_SIZE))) {
+                                BlockType type = BlockType::BlockType_Grass;
+
+                                if (height <= 3.0) 
+                                    type = BlockType::BlockType_Stone;
+                                else if (height <= 6.0)
+                                    type = BlockType::BlockType_Dirt;
+
+                                pChunk->m_pBlocks[block_x][block_y % Chunk::CHUNK_SIZE][block_z].m_blockType = type; //(BlockType)(rand() % ((int)BlockType::BlockType_NumTypes));
+                            }
                         }
                     }
-                    chunkList.push_back(pChunk);
-                    glm::vec3 pos = { chunk_x, 0, chunk_z };
-                    pChunk->m_position = pos;
-                    pChunk->m_position.y = 0;
-                    pChunk->update();
-                    chunk_used[chunk_x][chunk_z] = true;
+                    
 
-                    std::cout << "Generating chunk at (" << chunk_x << ", 0, " << chunk_z << ")" << std::endl;
+                    // All blocks in the chunk set to grass
+                    /*
+                    for (int block_x = 0; block_x < Chunk::CHUNK_SIZE; block_x++) {
+                        for (int block_y = 0; block_y < Chunk::CHUNK_SIZE; block_y++) {
+                            for (int block_z = 0; block_z < Chunk::CHUNK_SIZE; block_z++) {
+                                pChunk->m_pBlocks[block_x][block_y][block_z].m_blockType = BlockType::BlockType_Dirt; //(BlockType)(rand() % ((int)BlockType::BlockType_NumTypes));
+                            }
+                        }
+                    }
+                    */
+                    
+                    chunkList.push_back(pChunk);
+                    glm::vec3 pos = { chunk_x, chunk_y, chunk_z };
+                    pChunk->m_position = pos;
+                    pChunk->update();
+
+                    chunk_used[chunk_x % WORLD_SIZE_IN_CHUNKS][chunk_y % WORLD_SIZE_IN_CHUNKS][chunk_z % WORLD_SIZE_IN_CHUNKS] = true;
+
+                    //std::cout << "Generating chunk at (" << chunk_x << ", 0, " << chunk_z << ")" << std::endl;
                 }
             }
         }
-    //}
+    }
 }
 
 // Main code
@@ -275,7 +273,7 @@ int main(int, char**)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Our state
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.05f, 0.55f, 0.95f, 1.00f);
 
     setupTextures();
     Shader ourShader("box.vs", "box.fs");
@@ -292,20 +290,6 @@ int main(int, char**)
 
     //std::thread terrainThread(generateTerrain);
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 
     while (!done)
     {
@@ -465,28 +449,6 @@ int main(int, char**)
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glBindVertexArray(VAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array);
-
-        ourShader.use();
-
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-        unsigned int layerLoc = glGetUniformLocation(ourShader.ID, "layer");
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0, 0.0, -5.0));
-        glm::mat4 view = glm::mat4(1.0f);
-        view = camera.getViewMatrix(playerPos);
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(camera.getFov()), 800.0f / 600.0f, 0.1f, 100.0f);
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = projection * view * model;
-
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-        glUniform1i(layerLoc, 1); // force the block texture for now
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         generateTerrain();
 

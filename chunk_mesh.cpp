@@ -17,13 +17,14 @@ ChunkMesh::~ChunkMesh()
 
 void ChunkMesh::buildMesh(Block*** blocks)
 {
-    auto update_face = [](std::array<float, 30>& face, int x, int y, int z) {
+    auto update_face = [](std::array<float, 36>& face, int x, int y, int z, BlockType type) {
         int i = 0;
-        while (i < 30) {
+        while (i < 36) {
             face[i++] += x;
             face[i++] += y;
             face[i++] += z;
             i += 2;
+            face[i++] = (float)((int)type - 1);
         }
     };
 
@@ -31,42 +32,51 @@ void ChunkMesh::buildMesh(Block*** blocks)
         for (int y = 0; y < Chunk::CHUNK_SIZE; y++) {
             for (int z = 0; z < Chunk::CHUNK_SIZE; z++) {
 
+                if (blocks[x][y][z].m_blockType == BlockType::BlockType_Air)
+                    continue;
+
                 // If the other block is outside the chunk, render the face
                 // OR, if one face is air and the other is not, draw the face
                 // TODO: fix air pockets
-                if ((x + 1 >= Chunk::CHUNK_SIZE && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || ((x + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x+1][y][z].m_blockType))) {
-                    std::array<float, 30> face{ PX };
-                    update_face(face, x, y, z);
+                if ((x + 1 >= Chunk::CHUNK_SIZE) || ((x + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x+1][y][z].m_blockType)))
+                {
+                    std::array<float, 36> face{ PX };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
 
-                if ((y + 1 >= Chunk::CHUNK_SIZE && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || ((y + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y+1][z].m_blockType))) {
-                    std::array<float, 30> face{ PY };
-                    update_face(face, x, y, z);
+                if ((y + 1 >= Chunk::CHUNK_SIZE) || ((y + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y+1][z].m_blockType)))
+                {
+                    std::array<float, 36> face{ PY };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
 
-                if ((z + 1 >= Chunk::CHUNK_SIZE && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || ((z + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y][z+1].m_blockType))) {
-                    std::array<float, 30> face{ PZ };
-                    update_face(face, x, y, z);
+                if ((z + 1 >= Chunk::CHUNK_SIZE) || ((z + 1 < Chunk::CHUNK_SIZE) && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y][z+1].m_blockType)))
+                {
+                    std::array<float, 36> face{ PZ };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
 
-                if ((x - 1 < 0 && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || (x - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x-1][y][z].m_blockType))) {
-                    std::array<float, 30> face{ NX };
-                    update_face(face, x, y, z);
+                if ((x - 1 < 0) || (x - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x-1][y][z].m_blockType)))
+                {
+                    std::array<float, 36> face{ NX };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
 
-                if ((y - 1 < 0 && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || (y - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y-1][z].m_blockType))) {
-                    std::array<float, 30> face{ NY };
-                    update_face(face, x, y, z);
+                if ((y - 1 < 0) || (y - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y-1][z].m_blockType)))
+                {
+                    std::array<float, 36> face{ NY };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
 
-                if ((z - 1 < 0 && blocks[x][y][z].m_blockType != BlockType::BlockType_Air) || (z - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y][z-1].m_blockType))) {
-                    std::array<float, 30> face{ NZ };
-                    update_face(face, x, y, z);
+                if ((z - 1 < 0) || (z - 1 >= 0 && Block::shouldDrawFace(blocks[x][y][z].m_blockType, blocks[x][y][z-1].m_blockType)))
+                {
+                    std::array<float, 36> face{ NZ };
+                    update_face(face, x, y, z, blocks[x][y][z].m_blockType);
                     vertices.insert(vertices.end(), face.begin(), face.end());
                 }
             }
@@ -78,11 +88,14 @@ void ChunkMesh::buildMesh(Block*** blocks)
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 }
 
 void ChunkMesh::render(glm::vec3 position, Shader &ourShader)
@@ -103,7 +116,6 @@ void ChunkMesh::render(glm::vec3 position, Shader &ourShader)
     ourShader.use();
 
     unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-    unsigned int layerLoc = glGetUniformLocation(ourShader.ID, "layer");
 
     position.x *= Chunk::CHUNK_SIZE;
     position.y *= Chunk::CHUNK_SIZE;
@@ -119,6 +131,5 @@ void ChunkMesh::render(glm::vec3 position, Shader &ourShader)
     trans = projection * view * model;
 
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-    glUniform1i(layerLoc, 0); // force the block texture for now
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }

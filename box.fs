@@ -3,9 +3,9 @@
 out vec4 FragColor;
 
 in vec2 TexCoord;
+flat in float layer;
 
 uniform sampler2DArray ourTextureArray;
-uniform int layer;
 
 void main()
 {

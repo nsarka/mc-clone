@@ -2,12 +2,12 @@
 
 #include <array>
 
-extern std::array<float, 30> NZ;
-extern std::array<float, 30> PZ;
-extern std::array<float, 30> NX;
-extern std::array<float, 30> PX;
-extern std::array<float, 30> NY;
-extern std::array<float, 30> PY;
+extern std::array<float, 36> NZ;
+extern std::array<float, 36> PZ;
+extern std::array<float, 36> NX;
+extern std::array<float, 36> PX;
+extern std::array<float, 36> NY;
+extern std::array<float, 36> PY;
 
 enum class BlockType {
     BlockType_Air = 0,
