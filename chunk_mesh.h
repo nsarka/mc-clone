@@ -11,6 +11,7 @@
 #include "camera.h"
 #include "shader.h"
 
+class Chunk;
 
 class ChunkMesh
 {
@@ -19,7 +20,7 @@ public:
 	ChunkMesh();
 	~ChunkMesh();
 
-	void buildMesh(Block*** blocks);
+	void buildMesh(Chunk& chunk);
 	void render(glm::vec3 position, Shader& ourShader);
 
 //private:

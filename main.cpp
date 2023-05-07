@@ -7,8 +7,6 @@
 #include <thread>
 #include <vector>
 #include <cstdlib>
-#include <assert.h>
-
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -22,6 +20,7 @@
 #include "camera.h"
 #include "shader.h"
 #include "chunk.h"
+#include "texture.h"
 #include <cmath>
 
 bool done = false;
@@ -37,113 +36,67 @@ unsigned int VBO, VAO;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-std::array<float, 36> NZ = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f
+std::array<float, 42> NZ = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f
 };
 
-std::array<float, 36> PZ = {
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f
+std::array<float, 42> PZ = {
+    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 4.0f
 };
 
-std::array<float, 36> NX = {
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f
+std::array<float, 42> NX = {
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f
 };
 
-std::array<float, 36> PX = {
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f
+std::array<float, 42> PX = {
+     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 4.0f
 };
 
-std::array<float, 36> NY = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f
+std::array<float, 42> NY = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f
 };
 
-std::array<float, 36> PY = {
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f
+std::array<float, 42> PY = {
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 4.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 4.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 4.0f
 };
 
 
 Player player;
 Camera camera;
-unsigned int texture_array;
 std::vector<Chunk*> chunkList;
-const int WORLD_SIZE_IN_CHUNKS = 50;
+const int WORLD_SIZE_IN_CHUNKS = 25;
 bool chunk_used[WORLD_SIZE_IN_CHUNKS][WORLD_SIZE_IN_CHUNKS][WORLD_SIZE_IN_CHUNKS] = {false};
 
-void setupTextures()
-{
-    IMG_Init(IMG_INIT_PNG);
-    const int textureSize = 16;
-    const int numTextures = 4;
-    
-    glGenTextures(1, &texture_array);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array);
-
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, textureSize, textureSize,
-        numTextures, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-    SDL_Surface* surface = IMG_Load("texture_packs/default/voxels/grass.png");
-    assert(surface->w == 16);
-    assert(surface->h == 16);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, textureSize, textureSize, 1, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    SDL_FreeSurface(surface);
-
-    surface = IMG_Load("texture_packs/default/voxels/sand.png");
-    assert(surface->w == 16);
-    assert(surface->h == 16);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, textureSize, textureSize, 1, GL_RGB, GL_UNSIGNED_BYTE, surface->pixels); // even though sand.png is a png, it's GL_RGB instead of GL_RGBA
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    SDL_FreeSurface(surface);
-
-    surface = IMG_Load("texture_packs/default/voxels/dirt.png");
-    assert(surface->w == 16);
-    assert(surface->h == 16);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 2, textureSize, textureSize, 1, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    SDL_FreeSurface(surface);
-
-    surface = IMG_Load("texture_packs/default/voxels/stone.png");
-    assert(surface->w == 16);
-    assert(surface->h == 16);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 3, textureSize, textureSize, 1, GL_RGB, GL_UNSIGNED_BYTE, surface->pixels); // even though stone.png is a png, it's GL_RGB instead of GL_RGBA
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    SDL_FreeSurface(surface);
-}
 
 void generateTerrain()
 {
@@ -275,7 +228,7 @@ int main(int, char**)
     // Our state
     ImVec4 clear_color = ImVec4(0.05f, 0.55f, 0.95f, 1.00f);
 
-    setupTextures();
+    Texture::setup();
     Shader ourShader("box.vs", "box.fs");
 
     glEnable(GL_DEPTH_TEST);

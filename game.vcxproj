@@ -147,6 +147,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\dev\glad\include\KHR\khrplatform.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="chunk_mesh.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="texture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="box.fs" />

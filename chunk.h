@@ -18,7 +18,9 @@ public:
 
 	glm::vec3 getPosition() { return m_position; }
 
-	static const int CHUNK_SIZE = 16;
+	const BlockType getBlockType(int x, int y, int z) const;
+
+	static const int CHUNK_SIZE = 64;
 
 //private:
 	glm::vec3 m_position;

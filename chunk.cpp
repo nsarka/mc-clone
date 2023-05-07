@@ -26,10 +26,21 @@ Chunk::~Chunk() { // Delete the blocks
 
 void Chunk::update()
 {
-	mesh.buildMesh(m_pBlocks);
+	mesh.buildMesh(*this);
 }
 
 void Chunk::render(Shader& ourShader)
 {
 	mesh.render(m_position, ourShader);
+}
+
+const BlockType Chunk::getBlockType(int x, int y, int z) const
+{
+	if (x < 0 || y < 0 || z < 0)
+		return BlockType::BlockType_Air;
+
+	if (x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE)
+		return BlockType::BlockType_Air;
+
+	return m_pBlocks[x][y][z].m_blockType;
 }
