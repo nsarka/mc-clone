@@ -1,6 +1,6 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (game.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  main.cpp
+  chunk_mesh.cpp
 C:\Users\nick\Desktop\game\game\game\block.h(115,5): warning C5051: attribute 'fallthrough' requires at least '/std:c++17'; ignored
-C:\Users\nick\Desktop\game\game\game\main.cpp(210,9): warning C4297: 'SDL_main': function assumed not to throw an exception but does
-C:\Users\nick\Desktop\game\game\game\main.cpp(210,9): message : __declspec(nothrow), throw(), noexcept(true), or noexcept was specified on the function
+C:\Users\nick\Desktop\game\game\game\chunk_mesh.cpp(190,50): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\nick\Desktop\game\game\game\block.h(119): warning C4715: 'Block::getTexture': not all control paths return a value
   game.vcxproj -> C:\Users\nick\Desktop\game\game\x64\Debug\client.exe

@@ -137,13 +137,21 @@ void generateTerrain()
 
                             if (block_y >= (chunk_y * Chunk::CHUNK_SIZE) && (block_y < ((chunk_y + 1) * Chunk::CHUNK_SIZE))) {
                                 BlockType type = BlockType::BlockType_Grass;
-
-                                if (height <= 3.0) 
+                                
+                                if (height <= 2.0)
                                     type = BlockType::BlockType_Stone;
+                                else if (height <= 4.0)
+                                    type = BlockType::BlockType_Sand;
                                 else if (height <= 6.0)
                                     type = BlockType::BlockType_Dirt;
 
                                 pChunk->m_pBlocks[block_x][block_y % Chunk::CHUNK_SIZE][block_z].m_blockType = type; //(BlockType)(rand() % ((int)BlockType::BlockType_NumTypes));
+                            }
+
+                            for (int block_y = 0; block_y < Chunk::CHUNK_SIZE; block_y++) {
+                                if (pChunk->getBlockType(block_x, block_y - 1, block_z) == BlockType::BlockType_Stone) {
+                                    pChunk->m_pBlocks[block_x][block_y][block_z].m_blockType = BlockType::BlockType_Water;
+                                }
                             }
                         }
                     }
@@ -232,6 +240,8 @@ int main(int, char**)
     Shader ourShader("box.vs", "box.fs");
 
     glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Main loop
     bool forward = false;

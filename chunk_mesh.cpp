@@ -77,7 +77,6 @@ void ChunkMesh::buildMesh(Chunk& chunk)
                 break;
             }
             }
-
             face[i + 6] = (float)Block::getVertexAO(side1, side2, corner);
 
             i += 7;
@@ -183,7 +182,7 @@ void ChunkMesh::render(glm::vec3 position, Shader &ourShader)
     glm::mat4 view = glm::mat4(1.0f);
     view = camera.getViewMatrix(playerPos);
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(camera.getFov()), 800.0f / 600.0f, 0.1f, 200.0f);
+    projection = glm::perspective(glm::radians(camera.getFov()), 800.0f / 600.0f, 0.1f, 1000.0f);
     glm::mat4 trans = glm::mat4(1.0f);
     trans = projection * view * model;
 

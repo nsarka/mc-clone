@@ -20,7 +20,7 @@ public:
 
 	const BlockType getBlockType(int x, int y, int z) const;
 
-	static const int CHUNK_SIZE = 64;
+	static const int CHUNK_SIZE = 128;
 
 //private:
 	glm::vec3 m_position;
